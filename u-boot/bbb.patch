@@ -1,0 +1,393 @@
+From patchwork Thu Sep 12 17:50:34 2019
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Sam Protsenko <semen.protsenko@linaro.org>
+X-Patchwork-Id: 1161716
+X-Patchwork-Delegate: lokeshvutla@ti.com
+Return-Path: <u-boot-bounces@lists.denx.de>
+X-Original-To: incoming@patchwork.ozlabs.org
+Delivered-To: patchwork-incoming@bilbo.ozlabs.org
+Authentication-Results: ozlabs.org;
+	spf=none (mailfrom) smtp.mailfrom=lists.denx.de
+	(client-ip=81.169.180.215; helo=lists.denx.de;
+	envelope-from=u-boot-bounces@lists.denx.de;
+	receiver=<UNKNOWN>)
+Authentication-Results: ozlabs.org;
+	dmarc=fail (p=none dis=none) header.from=linaro.org
+Authentication-Results: ozlabs.org;
+	dkim=fail reason="signature verification failed" (2048-bit key;
+	unprotected) header.d=linaro.org header.i=@linaro.org
+	header.b="CI2/myYD"; dkim-atps=neutral
+Received: from lists.denx.de (dione.denx.de [81.169.180.215])
+	by ozlabs.org (Postfix) with ESMTP id 46TmXJ6Rnrz9s4Y
+	for <incoming@patchwork.ozlabs.org>;
+	Fri, 13 Sep 2019 03:50:54 +1000 (AEST)
+Received: by lists.denx.de (Postfix, from userid 105)
+	id 1B442C21E8A; Thu, 12 Sep 2019 17:50:48 +0000 (UTC)
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on lists.denx.de
+X-Spam-Level: 
+X-Spam-Status: No, score=-0.0 required=5.0 tests=RCVD_IN_MSPIKE_H3,
+	RCVD_IN_MSPIKE_WL,
+	T_DKIM_INVALID autolearn=unavailable autolearn_force=no
+	version=3.4.0
+Received: from lists.denx.de (localhost [IPv6:::1])
+	by lists.denx.de (Postfix) with ESMTP id 672B3C21DC1;
+	Thu, 12 Sep 2019 17:50:46 +0000 (UTC)
+Received: by lists.denx.de (Postfix, from userid 105)
+	id 28223C21DC1; Thu, 12 Sep 2019 17:50:45 +0000 (UTC)
+Received: from mail-pf1-f194.google.com (mail-pf1-f194.google.com
+	[209.85.210.194])
+	by lists.denx.de (Postfix) with ESMTPS id 76DE1C21DB5
+	for <u-boot@lists.denx.de>; Thu, 12 Sep 2019 17:50:44 +0000 (UTC)
+Received: by mail-pf1-f194.google.com with SMTP id d15so16432632pfo.10
+	for <u-boot@lists.denx.de>; Thu, 12 Sep 2019 10:50:44 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linaro.org; s=google;
+	h=from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=SEKSut/e+ohdEicX6wwHz60PvzXX5TW+wbNKMWp9N+U=;
+	b=CI2/myYDUhTh6ybFFqNmRuJYindrVYPwlORlNeV3RKs6Ok0HVIWgHDMPFf1833pj8w
+	IXwH4+5s/s+4zCCeZBe77NY9f+xOt+p7xMsg7Slrfuplitj4p81bJ1MlQFwDeDqAuNWj
+	P1vmJpuUlNiSp9vl5K9P5+IH+VO8U4tsFuY6+MwZRaB6TXtXFGo1KfABXmG94zN6dFxu
+	a8YtsNI5GvqVrRJQJ2XGnE5aQR+4xCahNmIuyyMP3erc2mXjPHoFTFeVer/NmwkPVPAy
+	YOKRMHx852aKk4fub9/oXenje6vBoyjmqVMsNcfqxvFzjbgoq7XuZ6UzXN34TxFw6wuN
+	7ZDg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=SEKSut/e+ohdEicX6wwHz60PvzXX5TW+wbNKMWp9N+U=;
+	b=nZlFQYICIBeMS9Fwf84yLXTrPx0T/8VfOLxm9wK4qQkCzx8b7Db9ptz4m2pnaRxsoA
+	EZpDPZyJ5fMvfj7z6YrCPXbdfCQfjlfuYjHL62WBRBqK3q0eOOzw43P0FmHGKrqXDv+8
+	yyopUtxYA4JzdHMMh2+K7AlE8m1lN2kGJGg2a87DMRS1q4KJjXWzASPDxPus4gOhjj79
+	T3EoEQDxaqggCdVpwvbs3z5C54HW/BeeV7G5EN9z7n6pXQCxl/0UUZFDNj6wU7dRmLF6
+	CbHmk/gwOBtS+XR4BUU88wqY482JkFG629HAP62CrW99KUMdFviQuX4NDMdOsPUZ8+wO
+	Y1LQ==
+X-Gm-Message-State: APjAAAW0IxIhYsgxVTPlja4yZYfbq89hK1gPtenqnJP1wFTkGIyGIUuk
+	V12aX8n6iDbVoIuHw1fXGCDTyUaeqMVXTQ==
+X-Google-Smtp-Source: 
+ APXvYqwRcMql3PhRjJvx4Nal1sMRNCz6raiNeSs75xypon8y+uOPlSpbOSA+oFxO49KhnfrYlxaQoQ==
+X-Received: by 2002:a63:1765:: with SMTP id
+	37mr39717482pgx.447.1568310642031;
+	Thu, 12 Sep 2019 10:50:42 -0700 (PDT)
+Received: from localhost ([2001:67c:2e5c:2011:2e0:4cff:fe68:2882])
+	by smtp.gmail.com with ESMTPSA id
+	n66sm41993540pfn.90.2019.09.12.10.50.39
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Thu, 12 Sep 2019 10:50:41 -0700 (PDT)
+From: Sam Protsenko <semen.protsenko@linaro.org>
+To: u-boot@lists.denx.de, Tom Rini <trini@konsulko.com>,
+	Faiz Abbas <faiz_abbas@ti.com>
+Date: Thu, 12 Sep 2019 20:50:34 +0300
+Message-Id: <20190912175035.19540-1-semen.protsenko@linaro.org>
+X-Mailer: git-send-email 2.23.0
+MIME-Version: 1.0
+Subject: [U-Boot] [PATCH v2 1/2] Revert "configs: Remove
+	am335x_boneblack_defconfig"
+X-BeenThere: u-boot@lists.denx.de
+X-Mailman-Version: 2.1.18
+Precedence: list
+List-Id: U-Boot discussion <u-boot.lists.denx.de>
+List-Unsubscribe: <https://lists.denx.de/options/u-boot>,
+	<mailto:u-boot-request@lists.denx.de?subject=unsubscribe>
+List-Archive: <http://lists.denx.de/pipermail/u-boot/>
+List-Post: <mailto:u-boot@lists.denx.de>
+List-Help: <mailto:u-boot-request@lists.denx.de?subject=help>
+List-Subscribe: <https://lists.denx.de/listinfo/u-boot>,
+	<mailto:u-boot-request@lists.denx.de?subject=subscribe>
+Errors-To: u-boot-bounces@lists.denx.de
+Sender: "U-Boot" <u-boot-bounces@lists.denx.de>
+
+Commit 8fa7f65dd02c ("configs: Remove am335x_boneblack_defconfig")
+removes defconfig for BeagleBone Black board, and it's advised to use
+am335x_evm_defconfig for all AM335x boards. But it's impossible to store
+environment in eMMC with am335x_evm_defconfig without modifications
+(NAND must be disabled, MMC enabled, etc). This is inconvenient for user
+to do such modifications via menuconfig (only developer knows what
+should be done). Furthermore, enabling MMC options in
+am335x_evm_defconfig leads to wrong pin-muxing scheme in
+board/ti/am335x/mux.c, because both NAND and MMC options are enabled in
+the config, so that pins are muxed for BBB with NAND cape, which in turn
+leads to non-functioning eMMC. There is no way to make the single defconfig
+working for both eMMC and NAND use-cases, because we can't figure out in
+run-time which board configuration is used by user (EVM, BBB, or BBB with
+NAND cape). Hence we rely on CONFIG options to figure out which
+configuration is used. Because of this we can't use single defconfig for
+AM335x EVM and BBB.
+
+All that said, let's bring back am335x_boneblack_defconfig, because
+right now users are not able to use U-Boot for BBB. Further patch will
+update this defconfig by enabling Driver Model and pulling some other
+useful options from am335x_evm_defconfig.
+
+Fixes: 8fa7f65dd02c ("configs: Remove am335x_boneblack_defconfig")
+Signed-off-by: Sam Protsenko <semen.protsenko@linaro.org>
+---
+Changes in v2:
+  - improve commit message by saying explicitly about eMMC env
+
+ configs/am335x_boneblack_defconfig | 50 ++++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+ create mode 100644 configs/am335x_boneblack_defconfig
+
+diff --git a/configs/am335x_boneblack_defconfig b/configs/am335x_boneblack_defconfig
+new file mode 100644
+index 0000000000..439d0cba05
+--- /dev/null
++++ b/configs/am335x_boneblack_defconfig
+@@ -0,0 +1,50 @@
++CONFIG_ARM=y
++CONFIG_ARCH_OMAP2PLUS=y
++CONFIG_TI_COMMON_CMD_OPTIONS=y
++CONFIG_AM33XX=y
++CONFIG_SPL=y
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_SYS_EXTRA_OPTIONS="EMMC_BOOT"
++CONFIG_BOOTCOMMAND="if test ${boot_fit} -eq 1; then run update_to_fit; fi; run findfdt; run init_console; run envboot; run distro_bootcmd"
++CONFIG_SYS_CONSOLE_INFO_QUIET=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_ARCH_MISC_INIT=y
++CONFIG_SPL_MUSB_NEW_SUPPORT=y
++# CONFIG_SPL_NAND_SUPPORT is not set
++CONFIG_SPL_OS_BOOT=y
++CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_PROMPT="Press SPACE to abort autoboot in %d seconds\n"
++CONFIG_AUTOBOOT_DELAY_STR="d"
++CONFIG_AUTOBOOT_STOP_STR=" "
++CONFIG_CMD_SPL=y
++# CONFIG_CMD_FLASH is not set
++# CONFIG_CMD_SETEXPR is not set
++CONFIG_ENV_IS_IN_MMC=y
++CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_BOOTCOUNT_LIMIT=y
++CONFIG_DFU_TFTP=y
++CONFIG_DFU_MMC=y
++CONFIG_DFU_RAM=y
++CONFIG_USB_FUNCTION_FASTBOOT=y
++CONFIG_FASTBOOT_FLASH=y
++CONFIG_FASTBOOT_FLASH_MMC_DEV=1
++CONFIG_FASTBOOT_CMD_OEM_FORMAT=y
++CONFIG_MMC_OMAP_HS=y
++CONFIG_SPI_FLASH=y
++CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_MII=y
++CONFIG_DRIVER_TI_CPSW=y
++CONFIG_SPI=y
++CONFIG_OMAP3_SPI=y
++CONFIG_USB=y
++CONFIG_USB_MUSB_HOST=y
++CONFIG_USB_MUSB_GADGET=y
++CONFIG_USB_MUSB_DSPS=y
++CONFIG_USB_GADGET=y
++CONFIG_USB_GADGET_MANUFACTURER="Texas Instruments"
++CONFIG_USB_GADGET_VENDOR_NUM=0x0451
++CONFIG_USB_GADGET_PRODUCT_NUM=0xd022
++CONFIG_USB_ETHER=y
++CONFIG_USBNET_HOST_ADDR="de:ad:be:af:00:00"
++CONFIG_LZO=y
++CONFIG_OF_LIBFDT=y
+
+From patchwork Thu Sep 12 17:50:35 2019
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Sam Protsenko <semen.protsenko@linaro.org>
+X-Patchwork-Id: 1161718
+X-Patchwork-Delegate: lokeshvutla@ti.com
+Return-Path: <u-boot-bounces@lists.denx.de>
+X-Original-To: incoming@patchwork.ozlabs.org
+Delivered-To: patchwork-incoming@bilbo.ozlabs.org
+Authentication-Results: ozlabs.org;
+	spf=none (mailfrom) smtp.mailfrom=lists.denx.de
+	(client-ip=81.169.180.215; helo=lists.denx.de;
+	envelope-from=u-boot-bounces@lists.denx.de;
+	receiver=<UNKNOWN>)
+Authentication-Results: ozlabs.org;
+	dmarc=fail (p=none dis=none) header.from=linaro.org
+Authentication-Results: ozlabs.org;
+	dkim=fail reason="signature verification failed" (2048-bit key;
+	unprotected) header.d=linaro.org header.i=@linaro.org
+	header.b="n++po29I"; dkim-atps=neutral
+Received: from lists.denx.de (dione.denx.de [81.169.180.215])
+	by ozlabs.org (Postfix) with ESMTP id 46TmXh05yGz9s4Y
+	for <incoming@patchwork.ozlabs.org>;
+	Fri, 13 Sep 2019 03:51:15 +1000 (AEST)
+Received: by lists.denx.de (Postfix, from userid 105)
+	id 808C2C21EF0; Thu, 12 Sep 2019 17:50:59 +0000 (UTC)
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on lists.denx.de
+X-Spam-Level: 
+X-Spam-Status: No, score=0.8 required=5.0 tests=RCVD_IN_MSPIKE_H3,
+	RCVD_IN_MSPIKE_WL,T_DKIM_INVALID,UPPERCASE_50_75 autolearn=no
+	autolearn_force=no version=3.4.0
+Received: from lists.denx.de (localhost [IPv6:::1])
+	by lists.denx.de (Postfix) with ESMTP id E0A35C21EC8;
+	Thu, 12 Sep 2019 17:50:57 +0000 (UTC)
+Received: by lists.denx.de (Postfix, from userid 105)
+	id 2715CC21EA7; Thu, 12 Sep 2019 17:50:53 +0000 (UTC)
+Received: from mail-pf1-f195.google.com (mail-pf1-f195.google.com
+	[209.85.210.195])
+	by lists.denx.de (Postfix) with ESMTPS id 6D52BC21E7D
+	for <u-boot@lists.denx.de>; Thu, 12 Sep 2019 17:50:50 +0000 (UTC)
+Received: by mail-pf1-f195.google.com with SMTP id r12so16494195pfh.1
+	for <u-boot@lists.denx.de>; Thu, 12 Sep 2019 10:50:50 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linaro.org; s=google;
+	h=from:to:cc:subject:date:message-id:in-reply-to:references
+	:mime-version:content-transfer-encoding;
+	bh=x7iqqhv3IJsegNNJFePT2qNfuZQcPHgjPNgNBli5v74=;
+	b=n++po29IxMX2p87pWecm/bo2WNkAUtlARtEKCpIw5rpV/hqC6SRBN8xQAYi8pJGdpJ
+	CYHJc+XnEn31/0+WVkIB3gHP9kGYZjYPs4NjlSLkEzzvvPSnd2DjKGVIZi6kLY+8ozAo
+	gmhKBGMnfH+6Me/qPrGVCYAGDtcIKkn8tAyp01T6gJbQSpVUtmrTkfv7bKGhxVgaNNXv
+	Sp9E3V30bTzn2sUVfhLBbvPVfuQr3XtGpp2PTT95YhMcSu4hu0lRwUuw3bukilJW4Nhk
+	tX4H+YWx6BblQd/iQb6MJPDnyDXzOp0qu1V5MAWo4b6vvKFdy+9SJApfoGcYRU23F021
+	GSSw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+	:references:mime-version:content-transfer-encoding;
+	bh=x7iqqhv3IJsegNNJFePT2qNfuZQcPHgjPNgNBli5v74=;
+	b=lVeX8ujsuenIbTRpkgMOf7J0zBUyFTqDtN69+IFQiuhTH2+9gf+BBmRfqGBoBsVj4+
+	+mwcB7uXmAZdnUYtRvjhgj92iyQt8oWrMO8QDBUPO0D0IZVxo++aUZavIokCsOcdLQEX
+	2tcME80pKlLF6oI0CZrgq7HDqWISpD0ZXPn+bva8JgeRePp4eSt3QZv4TBoG3Xrvv7QF
+	hJFNBJkyZGpNUUrrYpBYwVaI+ZtWSuVzgk5OgjjFmD5vs79qcN6dtLiQlUFHXqk+FN8i
+	zQZZeuc7BeUm5MgjfqHBRr+7Vjl0PQz+YwGTZljxhTcIpHONe9HYnTzL6dUKmgqnMm3E
+	yxIA==
+X-Gm-Message-State: APjAAAXXcU02gqESeBuTmhFp/k76zH9XmPeReNlmJrdGQ5mhifpIw+EV
+	tTRTh4D6e2m78+LqHrSvz6D1W2nxqQS21Q==
+X-Google-Smtp-Source: 
+ APXvYqxz1zU8gA6aJE1WuX/x/ziTPY/q6oqZNq9wJpxuNlhm78bImPmlDRSD59kq61naJr3/4ZPiwg==
+X-Received: by 2002:a17:90a:e505:: with SMTP id
+	t5mr1465625pjy.68.1568310648677;
+	Thu, 12 Sep 2019 10:50:48 -0700 (PDT)
+Received: from localhost ([2001:67c:2e5c:2011:2e0:4cff:fe68:2882])
+	by smtp.gmail.com with ESMTPSA id
+	b5sm45555024pfp.38.2019.09.12.10.50.46
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Thu, 12 Sep 2019 10:50:48 -0700 (PDT)
+From: Sam Protsenko <semen.protsenko@linaro.org>
+To: u-boot@lists.denx.de, Tom Rini <trini@konsulko.com>,
+	Faiz Abbas <faiz_abbas@ti.com>
+Date: Thu, 12 Sep 2019 20:50:35 +0300
+Message-Id: <20190912175035.19540-2-semen.protsenko@linaro.org>
+X-Mailer: git-send-email 2.23.0
+In-Reply-To: <20190912175035.19540-1-semen.protsenko@linaro.org>
+References: <20190912175035.19540-1-semen.protsenko@linaro.org>
+MIME-Version: 1.0
+Subject: [U-Boot] [PATCH v2 2/2] configs: am335x_boneblack: Sync with
+	am335x_evm
+X-BeenThere: u-boot@lists.denx.de
+X-Mailman-Version: 2.1.18
+Precedence: list
+List-Id: U-Boot discussion <u-boot.lists.denx.de>
+List-Unsubscribe: <https://lists.denx.de/options/u-boot>,
+	<mailto:u-boot-request@lists.denx.de?subject=unsubscribe>
+List-Archive: <http://lists.denx.de/pipermail/u-boot/>
+List-Post: <mailto:u-boot@lists.denx.de>
+List-Help: <mailto:u-boot-request@lists.denx.de?subject=help>
+List-Subscribe: <https://lists.denx.de/listinfo/u-boot>,
+	<mailto:u-boot-request@lists.denx.de?subject=subscribe>
+Errors-To: u-boot-bounces@lists.denx.de
+Sender: "U-Boot" <u-boot-bounces@lists.denx.de>
+
+Old am335x_boneblack defconfig doesn't have Driver Model enabled. Pull
+DM options from am335x_evm, along with some others, like ones for
+shrinking SPL, making am335x_boneblack defconfig as close as possible to
+am335x_evm.
+
+Main differences betweend am335x_boneblack and am335x_evm defconfigs:
+  - eMMC related options are enabled
+  - NAND related options are disabled
+  - keep watchdog disabled for now, as it doesn't work properly (needs
+    to be enabled once it's fixed)
+  - keep log level at default value (4), as it's useful to see some
+    errors, like "No USB device found"
+
+Fixes: 8fa7f65dd02c ("configs: Remove am335x_boneblack_defconfig")
+Signed-off-by: Sam Protsenko <semen.protsenko@linaro.org>
+---
+Changes in v2:
+  - improve commit message
+  - keep log level at default value (4)
+
+ configs/am335x_boneblack_defconfig | 36 ++++++++++++++++++++++++------
+ 1 file changed, 29 insertions(+), 7 deletions(-)
+
+diff --git a/configs/am335x_boneblack_defconfig b/configs/am335x_boneblack_defconfig
+index 439d0cba05..b8defc9d51 100644
+--- a/configs/am335x_boneblack_defconfig
++++ b/configs/am335x_boneblack_defconfig
+@@ -4,23 +4,32 @@ CONFIG_TI_COMMON_CMD_OPTIONS=y
+ CONFIG_AM33XX=y
+ CONFIG_SPL=y
+ CONFIG_DISTRO_DEFAULTS=y
++CONFIG_SPL_LOAD_FIT=y
++CONFIG_OF_BOARD_SETUP=y
+ CONFIG_SYS_EXTRA_OPTIONS="EMMC_BOOT"
+ CONFIG_BOOTCOMMAND="if test ${boot_fit} -eq 1; then run update_to_fit; fi; run findfdt; run init_console; run envboot; run distro_bootcmd"
+ CONFIG_SYS_CONSOLE_INFO_QUIET=y
+ CONFIG_VERSION_VARIABLE=y
+ CONFIG_ARCH_MISC_INIT=y
++CONFIG_SPL_FIT_IMAGE_TINY=y
++CONFIG_SPL_ETH_SUPPORT=y
++# CONFIG_SPL_FS_EXT4 is not set
+ CONFIG_SPL_MUSB_NEW_SUPPORT=y
+ # CONFIG_SPL_NAND_SUPPORT is not set
++CONFIG_SPL_NET_SUPPORT=y
++CONFIG_SPL_NET_VCI_STRING="AM335x U-Boot SPL"
+ CONFIG_SPL_OS_BOOT=y
+-CONFIG_AUTOBOOT_KEYED=y
+-CONFIG_AUTOBOOT_PROMPT="Press SPACE to abort autoboot in %d seconds\n"
+-CONFIG_AUTOBOOT_DELAY_STR="d"
+-CONFIG_AUTOBOOT_STOP_STR=" "
++CONFIG_SPL_USB_GADGET=y
++CONFIG_SPL_USB_ETHER=y
+ CONFIG_CMD_SPL=y
+ # CONFIG_CMD_FLASH is not set
+ # CONFIG_CMD_SETEXPR is not set
++CONFIG_OF_CONTROL=y
++CONFIG_DEFAULT_DEVICE_TREE="am335x-boneblack"
++CONFIG_OF_LIST="am335x-boneblack am335x-bonegreen"
+ CONFIG_ENV_IS_IN_MMC=y
+ CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_SPL_ENV_IS_NOWHERE=y
+ CONFIG_BOOTCOUNT_LIMIT=y
+ CONFIG_DFU_TFTP=y
+ CONFIG_DFU_MMC=y
+@@ -29,22 +38,35 @@ CONFIG_USB_FUNCTION_FASTBOOT=y
+ CONFIG_FASTBOOT_FLASH=y
+ CONFIG_FASTBOOT_FLASH_MMC_DEV=1
+ CONFIG_FASTBOOT_CMD_OEM_FORMAT=y
++CONFIG_DM_I2C=y
++CONFIG_MISC=y
++CONFIG_DM_MMC=y
+ CONFIG_MMC_OMAP_HS=y
++CONFIG_DM_SPI_FLASH=y
+ CONFIG_SPI_FLASH=y
+ CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_DM_ETH=y
+ CONFIG_MII=y
+ CONFIG_DRIVER_TI_CPSW=y
+ CONFIG_SPI=y
++CONFIG_DM_SPI=y
+ CONFIG_OMAP3_SPI=y
++CONFIG_TIMER=y
++CONFIG_OMAP_TIMER=y
+ CONFIG_USB=y
++CONFIG_DM_USB=y
++CONFIG_DM_USB_GADGET=y
++CONFIG_SPL_DM_USB_GADGET=y
+ CONFIG_USB_MUSB_HOST=y
+ CONFIG_USB_MUSB_GADGET=y
+-CONFIG_USB_MUSB_DSPS=y
++CONFIG_USB_MUSB_TI=y
+ CONFIG_USB_GADGET=y
+ CONFIG_USB_GADGET_MANUFACTURER="Texas Instruments"
+ CONFIG_USB_GADGET_VENDOR_NUM=0x0451
+ CONFIG_USB_GADGET_PRODUCT_NUM=0xd022
+ CONFIG_USB_ETHER=y
+-CONFIG_USBNET_HOST_ADDR="de:ad:be:af:00:00"
++# CONFIG_SPL_WDT is not set
++CONFIG_DYNAMIC_CRC_TABLE=y
++CONFIG_RSA=y
+ CONFIG_LZO=y
+-CONFIG_OF_LIBFDT=y
++# CONFIG_OF_LIBFDT_OVERLAY is not set

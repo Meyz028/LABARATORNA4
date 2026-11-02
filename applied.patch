@@ -1,0 +1,201 @@
+From a2c5e2551b1359aa675d241a4f113611cf62fb26 Mon Sep 17 00:00:00 2001
+From: Sam Protsenko <semen.protsenko@linaro.org>
+Date: Thu, 12 Sep 2019 20:50:34 +0300
+Subject: [PATCH 1/2] Revert "configs: Remove am335x_boneblack_defconfig"
+
+Commit 8fa7f65dd02c ("configs: Remove am335x_boneblack_defconfig")
+removes defconfig for BeagleBone Black board, and it's advised to use
+am335x_evm_defconfig for all AM335x boards. But it's impossible to store
+environment in eMMC with am335x_evm_defconfig without modifications
+(NAND must be disabled, MMC enabled, etc). This is inconvenient for user
+to do such modifications via menuconfig (only developer knows what
+should be done). Furthermore, enabling MMC options in
+am335x_evm_defconfig leads to wrong pin-muxing scheme in
+board/ti/am335x/mux.c, because both NAND and MMC options are enabled in
+the config, so that pins are muxed for BBB with NAND cape, which in turn
+leads to non-functioning eMMC. There is no way to make the single defconfig
+working for both eMMC and NAND use-cases, because we can't figure out in
+run-time which board configuration is used by user (EVM, BBB, or BBB with
+NAND cape). Hence we rely on CONFIG options to figure out which
+configuration is used. Because of this we can't use single defconfig for
+AM335x EVM and BBB.
+
+All that said, let's bring back am335x_boneblack_defconfig, because
+right now users are not able to use U-Boot for BBB. Further patch will
+update this defconfig by enabling Driver Model and pulling some other
+useful options from am335x_evm_defconfig.
+
+Fixes: 8fa7f65dd02c ("configs: Remove am335x_boneblack_defconfig")
+Signed-off-by: Sam Protsenko <semen.protsenko@linaro.org>
+---
+ configs/am335x_boneblack_defconfig | 50 ++++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+ create mode 100644 configs/am335x_boneblack_defconfig
+
+diff --git a/configs/am335x_boneblack_defconfig b/configs/am335x_boneblack_defconfig
+new file mode 100644
+index 00000000000..439d0cba05d
+--- /dev/null
++++ b/configs/am335x_boneblack_defconfig
+@@ -0,0 +1,50 @@
++CONFIG_ARM=y
++CONFIG_ARCH_OMAP2PLUS=y
++CONFIG_TI_COMMON_CMD_OPTIONS=y
++CONFIG_AM33XX=y
++CONFIG_SPL=y
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_SYS_EXTRA_OPTIONS="EMMC_BOOT"
++CONFIG_BOOTCOMMAND="if test ${boot_fit} -eq 1; then run update_to_fit; fi; run findfdt; run init_console; run envboot; run distro_bootcmd"
++CONFIG_SYS_CONSOLE_INFO_QUIET=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_ARCH_MISC_INIT=y
++CONFIG_SPL_MUSB_NEW_SUPPORT=y
++# CONFIG_SPL_NAND_SUPPORT is not set
++CONFIG_SPL_OS_BOOT=y
++CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_PROMPT="Press SPACE to abort autoboot in %d seconds\n"
++CONFIG_AUTOBOOT_DELAY_STR="d"
++CONFIG_AUTOBOOT_STOP_STR=" "
++CONFIG_CMD_SPL=y
++# CONFIG_CMD_FLASH is not set
++# CONFIG_CMD_SETEXPR is not set
++CONFIG_ENV_IS_IN_MMC=y
++CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_BOOTCOUNT_LIMIT=y
++CONFIG_DFU_TFTP=y
++CONFIG_DFU_MMC=y
++CONFIG_DFU_RAM=y
++CONFIG_USB_FUNCTION_FASTBOOT=y
++CONFIG_FASTBOOT_FLASH=y
++CONFIG_FASTBOOT_FLASH_MMC_DEV=1
++CONFIG_FASTBOOT_CMD_OEM_FORMAT=y
++CONFIG_MMC_OMAP_HS=y
++CONFIG_SPI_FLASH=y
++CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_MII=y
++CONFIG_DRIVER_TI_CPSW=y
++CONFIG_SPI=y
++CONFIG_OMAP3_SPI=y
++CONFIG_USB=y
++CONFIG_USB_MUSB_HOST=y
++CONFIG_USB_MUSB_GADGET=y
++CONFIG_USB_MUSB_DSPS=y
++CONFIG_USB_GADGET=y
++CONFIG_USB_GADGET_MANUFACTURER="Texas Instruments"
++CONFIG_USB_GADGET_VENDOR_NUM=0x0451
++CONFIG_USB_GADGET_PRODUCT_NUM=0xd022
++CONFIG_USB_ETHER=y
++CONFIG_USBNET_HOST_ADDR="de:ad:be:af:00:00"
++CONFIG_LZO=y
++CONFIG_OF_LIBFDT=y
+-- 
+2.43.0
+
+
+From db07a1ad2d048ba94a2598384143ffc5c28a5c0b Mon Sep 17 00:00:00 2001
+From: Sam Protsenko <semen.protsenko@linaro.org>
+Date: Thu, 12 Sep 2019 20:50:35 +0300
+Subject: [PATCH 2/2] configs: am335x_boneblack: Sync with am335x_evm
+
+Old am335x_boneblack defconfig doesn't have Driver Model enabled. Pull
+DM options from am335x_evm, along with some others, like ones for
+shrinking SPL, making am335x_boneblack defconfig as close as possible to
+am335x_evm.
+
+Main differences betweend am335x_boneblack and am335x_evm defconfigs:
+  - eMMC related options are enabled
+  - NAND related options are disabled
+  - keep watchdog disabled for now, as it doesn't work properly (needs
+    to be enabled once it's fixed)
+  - keep log level at default value (4), as it's useful to see some
+    errors, like "No USB device found"
+
+Fixes: 8fa7f65dd02c ("configs: Remove am335x_boneblack_defconfig")
+Signed-off-by: Sam Protsenko <semen.protsenko@linaro.org>
+---
+ configs/am335x_boneblack_defconfig | 36 ++++++++++++++++++++++++------
+ 1 file changed, 29 insertions(+), 7 deletions(-)
+
+diff --git a/configs/am335x_boneblack_defconfig b/configs/am335x_boneblack_defconfig
+index 439d0cba05d..b8defc9d515 100644
+--- a/configs/am335x_boneblack_defconfig
++++ b/configs/am335x_boneblack_defconfig
+@@ -4,23 +4,32 @@ CONFIG_TI_COMMON_CMD_OPTIONS=y
+ CONFIG_AM33XX=y
+ CONFIG_SPL=y
+ CONFIG_DISTRO_DEFAULTS=y
++CONFIG_SPL_LOAD_FIT=y
++CONFIG_OF_BOARD_SETUP=y
+ CONFIG_SYS_EXTRA_OPTIONS="EMMC_BOOT"
+ CONFIG_BOOTCOMMAND="if test ${boot_fit} -eq 1; then run update_to_fit; fi; run findfdt; run init_console; run envboot; run distro_bootcmd"
+ CONFIG_SYS_CONSOLE_INFO_QUIET=y
+ CONFIG_VERSION_VARIABLE=y
+ CONFIG_ARCH_MISC_INIT=y
++CONFIG_SPL_FIT_IMAGE_TINY=y
++CONFIG_SPL_ETH_SUPPORT=y
++# CONFIG_SPL_FS_EXT4 is not set
+ CONFIG_SPL_MUSB_NEW_SUPPORT=y
+ # CONFIG_SPL_NAND_SUPPORT is not set
++CONFIG_SPL_NET_SUPPORT=y
++CONFIG_SPL_NET_VCI_STRING="AM335x U-Boot SPL"
+ CONFIG_SPL_OS_BOOT=y
+-CONFIG_AUTOBOOT_KEYED=y
+-CONFIG_AUTOBOOT_PROMPT="Press SPACE to abort autoboot in %d seconds\n"
+-CONFIG_AUTOBOOT_DELAY_STR="d"
+-CONFIG_AUTOBOOT_STOP_STR=" "
++CONFIG_SPL_USB_GADGET=y
++CONFIG_SPL_USB_ETHER=y
+ CONFIG_CMD_SPL=y
+ # CONFIG_CMD_FLASH is not set
+ # CONFIG_CMD_SETEXPR is not set
++CONFIG_OF_CONTROL=y
++CONFIG_DEFAULT_DEVICE_TREE="am335x-boneblack"
++CONFIG_OF_LIST="am335x-boneblack am335x-bonegreen"
+ CONFIG_ENV_IS_IN_MMC=y
+ CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_SPL_ENV_IS_NOWHERE=y
+ CONFIG_BOOTCOUNT_LIMIT=y
+ CONFIG_DFU_TFTP=y
+ CONFIG_DFU_MMC=y
+@@ -29,22 +38,35 @@ CONFIG_USB_FUNCTION_FASTBOOT=y
+ CONFIG_FASTBOOT_FLASH=y
+ CONFIG_FASTBOOT_FLASH_MMC_DEV=1
+ CONFIG_FASTBOOT_CMD_OEM_FORMAT=y
++CONFIG_DM_I2C=y
++CONFIG_MISC=y
++CONFIG_DM_MMC=y
+ CONFIG_MMC_OMAP_HS=y
++CONFIG_DM_SPI_FLASH=y
+ CONFIG_SPI_FLASH=y
+ CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_DM_ETH=y
+ CONFIG_MII=y
+ CONFIG_DRIVER_TI_CPSW=y
+ CONFIG_SPI=y
++CONFIG_DM_SPI=y
+ CONFIG_OMAP3_SPI=y
++CONFIG_TIMER=y
++CONFIG_OMAP_TIMER=y
+ CONFIG_USB=y
++CONFIG_DM_USB=y
++CONFIG_DM_USB_GADGET=y
++CONFIG_SPL_DM_USB_GADGET=y
+ CONFIG_USB_MUSB_HOST=y
+ CONFIG_USB_MUSB_GADGET=y
+-CONFIG_USB_MUSB_DSPS=y
++CONFIG_USB_MUSB_TI=y
+ CONFIG_USB_GADGET=y
+ CONFIG_USB_GADGET_MANUFACTURER="Texas Instruments"
+ CONFIG_USB_GADGET_VENDOR_NUM=0x0451
+ CONFIG_USB_GADGET_PRODUCT_NUM=0xd022
+ CONFIG_USB_ETHER=y
+-CONFIG_USBNET_HOST_ADDR="de:ad:be:af:00:00"
++# CONFIG_SPL_WDT is not set
++CONFIG_DYNAMIC_CRC_TABLE=y
++CONFIG_RSA=y
+ CONFIG_LZO=y
+-CONFIG_OF_LIBFDT=y
++# CONFIG_OF_LIBFDT_OVERLAY is not set
+-- 
+2.43.0
+

@@ -1,0 +1,1 @@
+cmd_/home/makar/LABARATORNA4/hello.ko := arm-linux-gnueabihf-ld -r -EL -z noexecstack -T ./scripts/module-common.lds -T ./arch/arm/kernel/module.lds  --build-id  -o /home/makar/LABARATORNA4/hello.ko /home/makar/LABARATORNA4/hello.o /home/makar/LABARATORNA4/hello.mod.o ;  true
